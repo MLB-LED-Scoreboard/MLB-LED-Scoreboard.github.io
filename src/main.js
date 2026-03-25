@@ -105,6 +105,7 @@ function createEditor(schema, data, containerId, outputId) {
 
 function initEditor({ schemaUrl, exampleUrl, containerId, outputId }) {
   const container = document.querySelector(`#${containerId}`);
+  container.innerHTML = '<div class="loader"></div>';
 
   loadEditorData(schemaUrl, exampleUrl)
     .then(({ schema, data }) => createEditor(schema, data, containerId, outputId))
@@ -125,7 +126,13 @@ function initCoordinatesEditor(repoBase, size) {
   });
 }
 
+let editorsController = null;
+
 function initEditors(version) {
+  if (editorsController) editorsController.abort();
+  editorsController = new AbortController();
+  const { signal } = editorsController;
+
   const REPO_BASE = `https://raw.githubusercontent.com/MLB-LED-Scoreboard/mlb-led-scoreboard/${version}`;
 
   const lazyEditors = {
@@ -169,7 +176,7 @@ function initEditors(version) {
   if (activeTab) maybeInit(activeTab.dataset.bsTarget?.slice(1));
 
   document.querySelectorAll('[data-bs-toggle="tab"]').forEach(btn => {
-    btn.addEventListener('shown.bs.tab', () => maybeInit(btn.dataset.bsTarget.slice(1)));
+    btn.addEventListener('shown.bs.tab', () => maybeInit(btn.dataset.bsTarget.slice(1)), { signal });
   });
 
   const sizeSelect = document.querySelector('#size-select');
@@ -180,7 +187,7 @@ function initEditors(version) {
     sizeLabel.textContent = sizeSelect.value;
     wxhyDownload.dataset.filename = `${sizeSelect.value}.json`;
     initCoordinatesEditor(REPO_BASE, sizeSelect.value);
-  });
+  }, { signal });
 }
 
 // --- Bootstrap version selector ---
@@ -203,8 +210,10 @@ async function init() {
   versionSelect.value = version;
 
   versionSelect.addEventListener('change', () => {
-    params.set('version', versionSelect.value);
-    window.location.search = params.toString();
+    const p = new URLSearchParams(window.location.search);
+    p.set('version', versionSelect.value);
+    history.replaceState(null, '', '?' + p.toString());
+    initEditors(versionSelect.value);
   });
 
   initEditors(version);
@@ -212,18 +221,13 @@ async function init() {
 
 init();
 
-// --- Local schema file picker ---
-
-const TAB_EDITOR_MAP = {
-  'tab-config':     { containerId: 'jedison-config',     outputId: 'output-config' },
-  'tab-teams':      { containerId: 'jedison-teams',      outputId: 'output-teams' },
-  'tab-scoreboard': { containerId: 'jedison-scoreboard', outputId: 'output-scoreboard' },
-  'tab-wxhy':       { containerId: 'jedison-wxhy',       outputId: 'output-wxhy' }
-};
+// --- Local schema tab ---
 
 const localSchemaInput = document.querySelector('#local-schema-input');
 const localSchemaBtn   = document.querySelector('#local-schema-btn');
 const localSchemaName  = document.querySelector('#local-schema-name');
+const localOutputLabel = document.querySelector('#local-output-label');
+const localDownloadBtn = document.querySelector('.download-btn[data-target="output-local"]');
 
 localSchemaBtn.addEventListener('click', () => localSchemaInput.click());
 
@@ -232,14 +236,10 @@ localSchemaInput.addEventListener('change', async () => {
   if (!file) return;
 
   localSchemaName.textContent = file.name;
+  localOutputLabel.textContent = file.name.replace(/\.schema\.json$/, '.json');
+  localDownloadBtn.dataset.filename = file.name.replace(/\.schema\.json$/, '.json');
 
-  const activeTabBtn = document.querySelector('.nav-link.active[data-bs-target]');
-  const tabId = activeTabBtn?.dataset.bsTarget?.slice(1);
-  const editorConfig = TAB_EDITOR_MAP[tabId];
-  if (!editorConfig) return;
-
-  const { containerId, outputId } = editorConfig;
-  const container = document.querySelector(`#${containerId}`);
+  const container = document.querySelector('#jedison-local');
   container.innerHTML = '<div class="loader"></div>';
 
   try {
@@ -250,7 +250,7 @@ localSchemaInput.addEventListener('change', async () => {
     await refParser.dereference(schema);
     refParser.expandRecursive(schema);
 
-    createEditor(schema, null, containerId, outputId);
+    createEditor(schema, null, 'jedison-local', 'output-local');
   } catch (err) {
     container.textContent = `Failed to load local schema: ${err.message}`;
   }
