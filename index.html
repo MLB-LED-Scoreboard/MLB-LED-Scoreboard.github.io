@@ -29,6 +29,14 @@
         <option value="config-gen-schemas">config-gen-schemas (Testing)</option>
       </select>
     </div>
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <span>Or load local schema:</span>
+      <input type="file" id="local-schema-input" accept=".json" class="d-none">
+      <button class="btn btn-outline-secondary btn-sm" id="local-schema-btn">
+        <i class="bi bi-folder2-open"></i> Choose file...
+      </button>
+      <span id="local-schema-name" class="text-secondary small"></span>
+    </div>
 
     <ul class="nav nav-tabs mb-4" role="tablist">
       <li class="nav-item">

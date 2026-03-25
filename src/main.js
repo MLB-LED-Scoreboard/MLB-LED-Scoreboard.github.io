@@ -69,39 +69,45 @@ async function loadEditorData(schemaUrl, exampleUrl) {
 
 // --- Editor initialization ---
 
-function initEditor({ schemaUrl, exampleUrl, containerId, outputId }) {
+function createEditor(schema, data, containerId, outputId) {
   const container = document.querySelector(`#${containerId}`);
   const output = document.querySelector(`#${outputId}`);
 
-  loadEditorData(schemaUrl, exampleUrl)
-    .then(({ schema, data }) => requestAnimationFrame(() => {
-      container.innerHTML = '';
-      const jedison = new Jedison.Create({
-        container,
-        theme: new Jedison.ThemeBootstrap5(),
-        iconLib: 'bootstrap-icons',
-        btnContents: false,
-        enableCollapseToggle: true,
-        enablePropertiesToggle: true,
-        deactivateNonRequired: false,
-        customEditors: [EditorColorCustom],
-        schema,
-        ...(data && { data })
-      });
+  requestAnimationFrame(() => {
+    container.innerHTML = '';
+    const jedison = new Jedison.Create({
+      container,
+      theme: new Jedison.ThemeBootstrap5(),
+      iconLib: 'bootstrap-icons',
+      btnContents: false,
+      enableCollapseToggle: true,
+      enablePropertiesToggle: true,
+      deactivateNonRequired: false,
+      customEditors: [EditorColorCustom],
+      schema,
+      ...(data && { data })
+    });
 
-      function updateOutput() {
-        if (!jedison.getErrors().length) {
-          output.value = JSON.stringify(jedison.getValue(), null, 2);
-          output.dataset.valid = 'true';
-        } else {
-          output.value = 'Invalid config! Fix errors to see JSON output.';
-          output.dataset.valid = 'false';
-        }
+    function updateOutput() {
+      if (!jedison.getErrors().length) {
+        output.value = JSON.stringify(jedison.getValue(), null, 2);
+        output.dataset.valid = 'true';
+      } else {
+        output.value = 'Invalid config! Fix errors to see JSON output.';
+        output.dataset.valid = 'false';
       }
+    }
 
-      jedison.on('change', updateOutput);
-      updateOutput();
-    }))
+    jedison.on('change', updateOutput);
+    updateOutput();
+  });
+}
+
+function initEditor({ schemaUrl, exampleUrl, containerId, outputId }) {
+  const container = document.querySelector(`#${containerId}`);
+
+  loadEditorData(schemaUrl, exampleUrl)
+    .then(({ schema, data }) => createEditor(schema, data, containerId, outputId))
     .catch(err => {
       container.textContent = `Failed to load schema: ${err.message}`;
     });
@@ -205,6 +211,52 @@ async function init() {
 }
 
 init();
+
+// --- Local schema file picker ---
+
+const TAB_EDITOR_MAP = {
+  'tab-config':     { containerId: 'jedison-config',     outputId: 'output-config' },
+  'tab-teams':      { containerId: 'jedison-teams',      outputId: 'output-teams' },
+  'tab-scoreboard': { containerId: 'jedison-scoreboard', outputId: 'output-scoreboard' },
+  'tab-wxhy':       { containerId: 'jedison-wxhy',       outputId: 'output-wxhy' }
+};
+
+const localSchemaInput = document.querySelector('#local-schema-input');
+const localSchemaBtn   = document.querySelector('#local-schema-btn');
+const localSchemaName  = document.querySelector('#local-schema-name');
+
+localSchemaBtn.addEventListener('click', () => localSchemaInput.click());
+
+localSchemaInput.addEventListener('change', async () => {
+  const file = localSchemaInput.files[0];
+  if (!file) return;
+
+  localSchemaName.textContent = file.name;
+
+  const activeTabBtn = document.querySelector('.nav-link.active[data-bs-target]');
+  const tabId = activeTabBtn?.dataset.bsTarget?.slice(1);
+  const editorConfig = TAB_EDITOR_MAP[tabId];
+  if (!editorConfig) return;
+
+  const { containerId, outputId } = editorConfig;
+  const container = document.querySelector(`#${containerId}`);
+  container.innerHTML = '<div class="loader"></div>';
+
+  try {
+    const text = await file.text();
+    const schema = JSON.parse(text);
+
+    const refParser = new Jedison.RefParser();
+    await refParser.dereference(schema);
+    refParser.expandRecursive(schema);
+
+    createEditor(schema, null, containerId, outputId);
+  } catch (err) {
+    container.textContent = `Failed to load local schema: ${err.message}`;
+  }
+
+  localSchemaInput.value = '';
+});
 
 // --- Copy buttons ---
 
