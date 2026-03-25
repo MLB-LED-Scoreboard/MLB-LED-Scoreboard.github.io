@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MLB LED Scoreboard Config Editor</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+  <link rel="stylesheet" href="src/styles.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.3/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.4.2/Sortable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jedison@latest/dist/umd/jedison.umd.js"></script>
+</head>
+<body>
+  <div class="container py-4">
+    <h1 class="mb-1">MLB LED Scoreboard Config Editor</h1>
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <span>Select schema version:</span>
+      <select id="version-select" class="form-select form-select-sm w-auto">
+        <option value="dev">dev</option>
+      </select>
+    </div>
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <p class="text-secondary mb-0">Edit your config files below, then copy the output.</p>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-config" type="button">config.json</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-teams" type="button">colors/teams.json</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-scoreboard" type="button">colors/scoreboard.json</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-wxhy" type="button">coordinates/</button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="tab-config">
+        <div id="jedison-config"></div>
+        <div class="mt-4">
+          <h2 class="h6 text-secondary mb-2">config.json output</h2>
+          <pre id="output-config" class="p-3 rounded">{}</pre>
+          <button class="btn btn-primary btn-sm mt-2 copy-btn" data-target="output-config">Copy to clipboard</button>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-teams">
+        <div id="jedison-teams"></div>
+        <div class="mt-4">
+          <h2 class="h6 text-secondary mb-2">colors/teams.json output</h2>
+          <pre id="output-teams" class="p-3 rounded">{}</pre>
+          <button class="btn btn-primary btn-sm mt-2 copy-btn" data-target="output-teams">Copy to clipboard</button>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-scoreboard">
+        <div id="jedison-scoreboard"></div>
+        <div class="mt-4">
+          <h2 class="h6 text-secondary mb-2">colors/scoreboard.json output</h2>
+          <pre id="output-scoreboard" class="p-3 rounded">{}</pre>
+          <button class="btn btn-primary btn-sm mt-2 copy-btn" data-target="output-scoreboard">Copy to clipboard</button>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="tab-wxhy">
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <label for="size-select" class="text-secondary mb-0">Matrix dimensions:</label>
+          <select id="size-select" class="form-select form-select-sm w-auto">
+            <option value="w32h32">w32h32</option>
+            <option value="w64h32">w64h32</option>
+            <option value="w64h64">w64h64</option>
+            <option value="w128h32">w128h32</option>
+            <option value="w128h64" selected>w128h64</option>
+            <option value="w192h64">w192h64</option>
+          </select>
+        </div>
+        <div id="jedison-wxhy"></div>
+        <div class="mt-4">
+          <h2 class="h6 text-secondary mb-2">coordinates/<span id="wxhy-size-label">w128h64</span>.json output</h2>
+          <pre id="output-wxhy" class="p-3 rounded">{}</pre>
+          <button class="btn btn-primary btn-sm mt-2 copy-btn" data-target="output-wxhy">Copy to clipboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="src/main.js"></script>
+</body>
+</html>

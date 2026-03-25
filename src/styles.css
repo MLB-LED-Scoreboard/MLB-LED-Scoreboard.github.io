@@ -1,0 +1,11 @@
+#output-config {
+  background: #111;
+  color: #7ec8e3;
+  font-family: monospace;
+  font-size: 0.8rem;
+  white-space: pre;
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #333;
+}
