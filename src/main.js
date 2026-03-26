@@ -61,26 +61,17 @@ function isEligible(tagName) {
   return match && parseInt(match[1], 10) >= MINIMUM_SUPPORTED_VERSION;
 }
 
-async function loadEditorData(schemaUrl, exampleUrl) {
-  const [schema, data] = await Promise.all([
-    fetch(schemaUrl).then(r => r.json()),
-    exampleUrl ? fetch(exampleUrl).then(r => r.json()).catch(() => null) : Promise.resolve(null)
-  ]);
-
-  const refParser = new Jedison.RefParser();
-  await refParser.dereference(schema);
-  refParser.expandRecursive(schema);
-
-  return { schema, data };
-}
-
 // --- Editor initialization ---
 
-function createEditor(schema, containerId, outputId) {
+async function createEditor(schema, containerId, outputId) {
   const container = document.querySelector(`#${containerId}`);
   const output = document.querySelector(`#${outputId}`);
 
   container.innerHTML = '';
+
+  const refParser = new Jedison.RefParser();
+  await refParser.dereference(schema);
+  refParser.expandRecursive(schema);
 
   const jedison = new Jedison.Create({
     container,
@@ -91,6 +82,7 @@ function createEditor(schema, containerId, outputId) {
     enablePropertiesToggle: true,
     deactivateNonRequired: false,
     customEditors: [EditorColorCustom],
+    refParser,
     schema
   });
 
@@ -113,7 +105,8 @@ function initEditor({ schemaUrl, containerId, outputId }) {
   const container = document.querySelector(`#${containerId}`);
   container.innerHTML = '<div class="loader"></div>';
 
-  loadEditorData(schemaUrl)
+  fetch(schemaUrl)
+    .then((res) => res.json())
     .then((schema) => createEditor(schema, containerId, outputId))
     .catch(err => {
       container.textContent = `Failed to load schema: ${err.message}`;
