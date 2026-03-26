@@ -36,8 +36,15 @@ class EditorColorCustom extends Jedison.Editor {
       id: this.getIdFromPath(this.instance.path)
     });
 
-    const val = this.instance.getValue();
-    this.control.input.value = val?.r !== undefined ? rgbToHex(val) : '#000000';
+    const setColor = () => {
+      const val = this.instance.getValue();
+      this.control.input.value = val?.r !== undefined ? rgbToHex(val) : '#000000';
+    };
+
+    setColor();
+
+    // We need to set a listener here in case of nested references, in which case the defaults might not be ready yet.
+    this.instance.on("set-value", setColor);
   }
 
   addEventListeners() {
@@ -69,46 +76,45 @@ async function loadEditorData(schemaUrl, exampleUrl) {
 
 // --- Editor initialization ---
 
-function createEditor(schema, data, containerId, outputId) {
+function createEditor(schema, containerId, outputId) {
   const container = document.querySelector(`#${containerId}`);
   const output = document.querySelector(`#${outputId}`);
 
-  requestAnimationFrame(() => {
-    container.innerHTML = '';
-    const jedison = new Jedison.Create({
-      container,
-      theme: new Jedison.ThemeBootstrap5(),
-      iconLib: 'bootstrap-icons',
-      btnContents: false,
-      enableCollapseToggle: true,
-      enablePropertiesToggle: true,
-      deactivateNonRequired: false,
-      customEditors: [EditorColorCustom],
-      schema,
-      ...(data && { data })
-    });
+  container.innerHTML = '';
 
-    function updateOutput() {
-      if (!jedison.getErrors().length) {
-        output.value = JSON.stringify(jedison.getValue(), null, 2);
-        output.dataset.valid = 'true';
-      } else {
-        output.value = 'Invalid config! Fix errors to see JSON output.';
-        output.dataset.valid = 'false';
-      }
-    }
-
-    jedison.on('change', updateOutput);
-    updateOutput();
+  const jedison = new Jedison.Create({
+    container,
+    theme: new Jedison.ThemeBootstrap5(),
+    iconLib: 'bootstrap-icons',
+    btnContents: false,
+    enableCollapseToggle: true,
+    enablePropertiesToggle: true,
+    deactivateNonRequired: false,
+    customEditors: [EditorColorCustom],
+    schema
   });
+
+  function updateOutput() {
+    if (!jedison.getErrors().length) {
+      output.value = JSON.stringify(jedison.getValue(), null, 2);
+      output.dataset.valid = 'true';
+    } else {
+      output.value = 'Invalid config! Fix errors to see JSON output.';
+      output.dataset.valid = 'false';
+    }
+  }
+
+  jedison.on('change', updateOutput);
+
+  updateOutput();
 }
 
-function initEditor({ schemaUrl, exampleUrl, containerId, outputId }) {
+function initEditor({ schemaUrl, containerId, outputId }) {
   const container = document.querySelector(`#${containerId}`);
   container.innerHTML = '<div class="loader"></div>';
 
-  loadEditorData(schemaUrl, exampleUrl)
-    .then(({ schema, data }) => createEditor(schema, data, containerId, outputId))
+  loadEditorData(schemaUrl)
+    .then((schema) => createEditor(schema, containerId, outputId))
     .catch(err => {
       container.textContent = `Failed to load schema: ${err.message}`;
     });
@@ -119,8 +125,7 @@ function initCoordinatesEditor(repoBase, size) {
   container.innerHTML = '<div class="loader"></div>';
 
   initEditor({
-    schemaUrl:   `${repoBase}/coordinates/wxhy.schema.json`,
-    exampleUrl:  `${repoBase}/coordinates/${size}.example.json`,
+    schemaUrl:   `${repoBase}/coordinates/${size}.schema.json`,
     containerId: 'jedison-wxhy',
     outputId:    'output-wxhy'
   });
@@ -133,24 +138,21 @@ function initEditors(version) {
   editorsController = new AbortController();
   const { signal } = editorsController;
 
-  const REPO_BASE = `https://raw.githubusercontent.com/MLB-LED-Scoreboard/mlb-led-scoreboard/${version}`;
+  const REPO_BASE = `https://raw.githubusercontent.com/MLB-LED-Scoreboard/mlb-led-scoreboard/${version}/schemas`;
 
   const lazyEditors = {
     'tab-config': {
       schemaUrl:   `${REPO_BASE}/config.schema.json`,
-      exampleUrl:  `${REPO_BASE}/config.example.json`,
       containerId: 'jedison-config',
       outputId:    'output-config'
     },
     'tab-teams': {
       schemaUrl:   `${REPO_BASE}/colors/teams.schema.json`,
-      exampleUrl:  `${REPO_BASE}/colors/teams.example.json`,
       containerId: 'jedison-teams',
       outputId:    'output-teams'
     },
     'tab-scoreboard': {
       schemaUrl:   `${REPO_BASE}/colors/scoreboard.schema.json`,
-      exampleUrl:  `${REPO_BASE}/colors/scoreboard.example.json`,
       containerId: 'jedison-scoreboard',
       outputId:    'output-scoreboard'
     }
@@ -250,7 +252,7 @@ localSchemaInput.addEventListener('change', async () => {
     await refParser.dereference(schema);
     refParser.expandRecursive(schema);
 
-    createEditor(schema, null, 'jedison-local', 'output-local');
+    createEditor(schema, 'jedison-local', 'output-local');
   } catch (err) {
     container.textContent = `Failed to load local schema: ${err.message}`;
   }
