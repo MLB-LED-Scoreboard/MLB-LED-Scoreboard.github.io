@@ -1,3 +1,27 @@
+import 'bootstrap';
+import DOMPurify from 'dompurify';
+import Sortable from 'sortablejs';
+import Choices from 'choices.js';
+import Jedison from 'jedison';
+import $RefParser from "@apidevtools/json-schema-ref-parser";
+
+import './styles.css';
+
+window.DOMPurify = DOMPurify;
+window.Sortable = Sortable;
+window.Choices = Choices;
+
+// Handles x-schema. $schema is a JSON schema keyword and an intellisense keyword in some editors.
+// Placing a default $schema causes some parsers to try to resolve a bogus relative URL.
+function finalizeOutput(obj) {
+  if (Array.isArray(obj)) return obj.map(finalizeOutput);
+  if (!obj || typeof obj !== 'object') return obj;
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k === 'x-schema' ? '$schema' : k,
+finalizeOutput(v)])
+  );
+}
+
 const MINIMUM_SUPPORTED_VERSION = 9;
 
 const versionSelect = document.querySelector('#version-select');
@@ -88,7 +112,11 @@ async function createEditor(schema, containerId, outputId) {
 
   function updateOutput() {
     if (!jedison.getErrors().length) {
-      output.value = JSON.stringify(jedison.getValue(), null, 2);
+      output.value = JSON.stringify(
+        finalizeOutput(jedison.getValue()),
+        null,
+        2
+      );
       output.dataset.valid = 'true';
     } else {
       output.value = 'Invalid config! Fix errors to see JSON output.';
@@ -105,8 +133,7 @@ function initEditor({ schemaUrl, containerId, outputId }) {
   const container = document.querySelector(`#${containerId}`);
   container.innerHTML = '<div class="loader"></div>';
 
-  fetch(schemaUrl)
-    .then((res) => res.json())
+  $RefParser.bundle(schemaUrl)
     .then((schema) => createEditor(schema, containerId, outputId))
     .catch(err => {
       container.textContent = `Failed to load schema: ${err.message}`;
