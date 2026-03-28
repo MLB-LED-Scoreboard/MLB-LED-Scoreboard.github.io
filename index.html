@@ -12,7 +12,7 @@
   <div class="container py-4">
     <h1 class="mb-1">MLB LED Scoreboard Config Editor</h1>
     <div class="d-flex align-items-center gap-3 mb-3">
-      <span>Select schema version:</span>
+      <span>Schema version:</span>
       <select id="version-select" class="form-select form-select-sm w-auto">
         <option value="dev">dev</option>
         <option value="config-gen-schemas">config-gen-schemas (Testing)</option>
@@ -30,9 +30,6 @@
       </li>
       <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-wxhy" type="button">coordinates/wXhY.json</button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-local" type="button">Local Schema</button>
       </li>
     </ul>
 
@@ -116,31 +113,6 @@
               </div>
               <p class="text-secondary small mb-1">coordinates/<span id="wxhy-size-label">w128h64</span>.json</p>
               <textarea id="output-wxhy" class="json-output form-control font-monospace" wrap="off" readonly></textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tab-pane fade" id="tab-local">
-        <div class="d-flex align-items-center gap-3 mb-4">
-          <input type="file" id="local-schema-input" accept=".json" class="d-none">
-          <button class="btn btn-outline-secondary btn-sm" id="local-schema-btn">
-            <i class="bi bi-folder2-open"></i> Choose file...
-          </button>
-          <span id="local-schema-name" class="text-secondary small"></span>
-        </div>
-        <div class="row">
-          <div class="col-lg-7">
-            <div id="jedison-local"></div>
-          </div>
-          <div class="col-lg-5">
-            <div class="sticky-top pt-2">
-              <div class="d-flex gap-2 mt-2">
-                <button class="btn btn-primary btn-sm download-btn" data-target="output-local" data-filename="">Download</button>
-                <button class="btn btn-secondary btn-sm copy-btn" data-target="output-local">Copy</button>
-              </div>
-              <p class="text-secondary small mb-1" id="local-output-label"></p>
-              <textarea id="output-local" class="json-output form-control font-monospace" wrap="off" readonly></textarea>
             </div>
           </div>
         </div>

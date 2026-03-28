@@ -243,43 +243,6 @@ async function init() {
 
 init();
 
-// --- Local schema tab ---
-
-const localSchemaInput = document.querySelector('#local-schema-input');
-const localSchemaBtn   = document.querySelector('#local-schema-btn');
-const localSchemaName  = document.querySelector('#local-schema-name');
-const localOutputLabel = document.querySelector('#local-output-label');
-const localDownloadBtn = document.querySelector('.download-btn[data-target="output-local"]');
-
-localSchemaBtn.addEventListener('click', () => localSchemaInput.click());
-
-localSchemaInput.addEventListener('change', async () => {
-  const file = localSchemaInput.files[0];
-  if (!file) return;
-
-  localSchemaName.textContent = file.name;
-  localOutputLabel.textContent = file.name.replace(/\.schema\.json$/, '.json');
-  localDownloadBtn.dataset.filename = file.name.replace(/\.schema\.json$/, '.json');
-
-  const container = document.querySelector('#jedison-local');
-  container.innerHTML = '<div class="loader"></div>';
-
-  try {
-    const text = await file.text();
-    const schema = JSON.parse(text);
-
-    const refParser = new Jedison.RefParser();
-    await refParser.dereference(schema);
-    refParser.expandRecursive(schema);
-
-    createEditor(schema, 'jedison-local', 'output-local');
-  } catch (err) {
-    container.textContent = `Failed to load local schema: ${err.message}`;
-  }
-
-  localSchemaInput.value = '';
-});
-
 // --- Copy buttons ---
 
 document.querySelectorAll('.copy-btn').forEach(btn => {
